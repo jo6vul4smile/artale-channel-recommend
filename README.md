@@ -35,10 +35,10 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       width: 90%;
-      max-width: 400px;
+      max-width: 500px;
       margin-left: auto;
       margin-right: auto;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       color: #333;
       line-height: 1.6;
     }
@@ -46,7 +46,7 @@
 </head>
 <body>
   <h1>🎯 ARTALE 頻道推薦器</h1>
-  <p>輸入你的出生年月日，即可獲得今日幸運頻道</p>
+  <p>輸入你的出生年月日，即可獲得今日幸運頻道與衝捲建議</p>
   <input type="date" id="birthdate" />
   <button onclick="recommendChannel()">獲得推薦</button>
   <div id="result"></div>
@@ -93,13 +93,23 @@
 
       const tailOptions = ["09", "29", "39", "00", "99"];
 
+      const scrollTips = `
+        📜 <b>衝捲建議：</b><br>
+        🔹 使用【10%】捲建議：深夜衝、單人頻道、配戴幸運飾品效果較佳<br>
+        🔹 使用【60%】捲建議：搭配強化活動、黃金時段（14:00~17:00）成功率提升<br>
+        🔹 推薦尾號頻道：<code>${tailOptions.join("</code>、<code>")}</code><br>
+        🔹 請先測試一般裝備衝捲情況，觀察頻道運氣，再衝重要部位<br>
+        🔹 避免於同頻道連續失敗時繼續強化，建議切換頻道嘗試
+      `;
+
       document.getElementById("result").innerHTML = `
         🔮 <b>生肖：</b>${zodiac}<br>
         🌌 <b>星座：</b>${horoscope}<br><br>
         📡 <b>今日推薦頻道號碼：</b><br>
         ✅ 主推：<b style="color:#007bff; font-size:1.4rem">${mainStr}</b><br>
         ✨ 次選：${alt1Str}、${alt2Str}<br><br>
-        🔢 <b>推薦尾號：</b>${tailOptions.map(n => `<code>${n}</code>`).join("、")}
+        🔢 <b>推薦尾號：</b>${tailOptions.map(n => `<code>${n}</code>`).join("、")}<br><br>
+        ${scrollTips}
       `;
     }
   </script>
