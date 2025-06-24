@@ -82,7 +82,10 @@
       const zodiac = getZodiac(year);
       const horoscope = getHoroscope(month, day);
 
-      const base = (year + month + day + today.getDate()) % 3000;
+      // 改為以今日日期為唯一種子，所有人同一天推薦相同
+      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+      const base = (seed + year + month + day) % 3000;
+
       const mainChannel = (base + 729) % 3000;
       const alt1 = (base + 229) % 3000;
       const alt2 = (base + 909) % 3000;
