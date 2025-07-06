@@ -42,6 +42,11 @@
       color: #333;
       line-height: 1.6;
     }
+    .footer-note {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #888;
+    }
   </style>
 </head>
 <body>
@@ -52,21 +57,7 @@
   <div id="result"></div>
 
   <script>
-    function getZodiac(year) {
-      const animals = ["猴", "雞", "狗", "豬", "鼠", "牛", "虎", "兔", "龍", "蛇", "馬", "羊"];
-      return animals[year % 12];
-    }
-
-    function getHoroscope(month, day) {
-      const signs = [
-        ["摩羯", 19], ["水瓶", 18], ["雙魚", 20], ["牡羊", 19], ["金牛", 20],
-        ["雙子", 20], ["巨蟹", 22], ["獅子", 22], ["處女", 22], ["天秤", 23],
-        ["天蠍", 22], ["射手", 21], ["摩羯", 31]
-      ];
-      return day <= signs[month - 1][1] ? signs[month - 1][0] : signs[month][0];
-    }
-
-    function recommendChannel() {
+    async function recommendChannel() {
       const birth = document.getElementById("birthdate").value;
       const date = new Date(birth);
       if (isNaN(date.getTime())) {
@@ -79,40 +70,48 @@
       const month = date.getMonth() + 1;
       const day = date.getDate();
 
-      const zodiac = getZodiac(year);
-      const horoscope = getHoroscope(month, day);
+      const zodiac = ["猴", "雞", "狗", "豬", "鼠", "牛", "虎", "兔", "龍", "蛇", "馬", "羊"][year % 12];
 
-      // 改為以今日日期為唯一種子，所有人同一天推薦相同
-      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
-      const base = (seed + year + month + day) % 3000;
+      const signs = [
+        ["摩羯", 19], ["水瓶", 18], ["雙魚", 20], ["牡羊", 19], ["金牛", 20],
+        ["雙子", 20], ["巨蟹", 22], ["獅子", 22], ["處女", 22], ["天秤", 23],
+        ["天蠍", 22], ["射手", 21], ["摩羯", 31]
+      ];
+      const horoscope = day <= signs[month - 1][1] ? signs[month - 1][0] : signs[month][0];
 
-      const mainChannel = (base + 729) % 3000;
-      const alt1 = (base + 229) % 3000;
-      const alt2 = (base + 909) % 3000;
+      let config = {};
+      try {
+        const response = await fetch("./config.json");
+        config = await response.json();
+      } catch (e) {
+        console.warn("無法讀取外部 config.json，將使用預設建議");
+      }
 
-      const mainStr = mainChannel.toString().padStart(3, "0");
-      const alt1Str = alt1.toString().padStart(3, "0");
-      const alt2Str = alt2.toString().padStart(3, "0");
+      const todayKey = today.toISOString().split("T")[0];
+      const daily = config[todayKey] || {};
 
-      const tailOptions = ["09", "29", "39", "00", "99"];
-
-      const scrollTips = `
-        📜 <b>衝捲建議：</b><br>
-        🔹 使用【10%】捲建議：深夜衝、單人頻道、配戴幸運飾品效果較佳<br>
-        🔹 使用【60%】捲建議：搭配強化活動、黃金時段（14:00~17:00）成功率提升<br>
-        🔹 推薦尾號頻道：<code>${tailOptions.join("</code>、<code>")}</code><br>
-        🔹 請先測試一般裝備衝捲情況，觀察頻道運氣，再衝重要部位<br>
-        🔹 避免於同頻道連續失敗時繼續強化，建議切換頻道嘗試
-      `;
+      const mainChannels = (daily.recommendedChannels || {}).default || ["1355", "2310", "2999"];
+      const altChannels = (daily.recommendedChannels || {}).fallback || ["0988", "0877"];
+      const dynamicTail = daily.tail || ["09", "29", "39", "00", "99"];
+      const grindTime = daily.grindTime || "晚上 20:00 - 23:00";
+      const tangAdvice = daily.tang || "🌠 今日情緒起伏偏大，適合短線操作與分批嘗試";
+      const dailyHoroscope = (daily.horoscopes || {})[horoscope] || "🔹 今日無特別建議，建議依個人節奏操作";
 
       document.getElementById("result").innerHTML = `
         🔮 <b>生肖：</b>${zodiac}<br>
         🌌 <b>星座：</b>${horoscope}<br><br>
         📡 <b>今日推薦頻道號碼：</b><br>
-        ✅ 主推：<b style="color:#007bff; font-size:1.4rem">${mainStr}</b><br>
-        ✨ 次選：${alt1Str}、${alt2Str}<br><br>
-        🔢 <b>推薦尾號：</b>${tailOptions.map(n => `<code>${n}</code>`).join("、")}<br><br>
-        ${scrollTips}
+        ✅ 主推：<b style="color:#007bff; font-size:1.4rem">${mainChannels.join("、")}</b><br>
+        ✨ 次選：${altChannels.join("、")}<br><br>
+        🔢 <b>推薦尾號：</b>${dynamicTail.map(n => `<code>${n}</code>`).join("、")}<br><br>
+        📜 <b>今日衝捲建議：</b><br>
+        ${dailyHoroscope}<br>
+        🔹 建議觀察頻道運氣後，再衝重要部位<br>
+        🔹 連敗後建議切換頻道轉運<br>
+        <br><hr><br>
+        🧙‍♂️ <b>唐楊琦老師建議：</b><br>
+        ${tangAdvice}<br>
+        ⏰ <b>最佳刷怪時段：</b> <span style="color:#008800">${grindTime}</span>
       `;
     }
   </script>
