@@ -1,1 +1,64 @@
+name: 每日更新頻道建議
 
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 台灣時間每日上午11點 (UTC+8)
+  workflow_dispatch:
+
+jobs:
+  update-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下載 Repo
+        uses: actions/checkout@v3
+
+      - name: 設定 Python 環境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: 安裝依賴並更新 config.json
+        run: |
+          python -c "
+import json
+from datetime import datetime
+
+def generate_config():
+    today_str = datetime.utcnow().date().isoformat()
+    zodiac = ['猴','雞','狗','豬','鼠','牛','虎','兔','龍','蛇','馬','羊'][1995 % 12]
+    horoscope = '射手'
+    seed = (1995 * 10000 + 12 * 100 + 9 + int(today_str.replace('-', ''))) % 9999
+    mc = (seed * 7 + 321) % 3000
+    a1 = (mc + 173) % 3000
+    a2 = (mc + 429) % 3000
+    result = {{
+        today_str: {{
+            'zodiac': zodiac,
+            'horoscope': horoscope,
+            'tang': '今日不宜衝動，慢刷為佳，觀察頻道氣氛後再出手。',
+            'tail': [f'{{(seed + i * 13) % 100:02d}}' for i in range(3)],
+            'grindTime': '20:00 ~ 23:30',
+            'horoscopes': {{
+                '射手': '60%捲適合在晚間使用，避免連續失敗。',
+                '雙魚': '白天財運佳，建議提早操作。',
+                '天蠍': '觀察氣氛，選擇熟悉的頻道更有利。'
+            }},
+            'recommendedChannels': {{
+                'default': [f'{{mc:04d}}'],
+                'fallback': [f'{{a1:04d}}', f'{{a2:04d}}']
+            }}
+        }}
+    }}
+    with open('docs/config.json', 'w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+
+generate_config()
+"
+
+      - name: 提交更新
+        run: |
+          git config --global user.name 'auto-bot'
+          git config --global user.email 'bot@example.com'
+          git add docs/config.json
+          git commit -m '每日自動更新 config.json' || echo '無需更新'
+          git push
