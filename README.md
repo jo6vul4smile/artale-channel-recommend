@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>頻道推薦系統</title>
+  <title>Artale 頻道推薦器</title>
   <style>
     body {
       font-family: "Microsoft JhengHei", sans-serif;
@@ -50,7 +50,7 @@
   </style>
 </head>
 <body>
-  <h1>🎯 ARTALE 頻道推薦器</h1>
+  <h1>🎯 Artale 頻道推薦器</h1>
   <p>輸入你的出生年月日，即可獲得今日幸運頻道與衝捲建議</p>
   <input type="date" id="birthdate" />
   <button onclick="recommendChannel()">獲得推薦</button>
@@ -69,15 +69,24 @@
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       const day = date.getDate();
-
       const zodiac = ["猴", "雞", "狗", "豬", "鼠", "牛", "虎", "兔", "龍", "蛇", "馬", "羊"][year % 12];
-
       const signs = [
         ["摩羯", 19], ["水瓶", 18], ["雙魚", 20], ["牡羊", 19], ["金牛", 20],
         ["雙子", 20], ["巨蟹", 22], ["獅子", 22], ["處女", 22], ["天秤", 23],
         ["天蠍", 22], ["射手", 21], ["摩羯", 31]
       ];
       const horoscope = day <= signs[month - 1][1] ? signs[month - 1][0] : signs[month][0];
+
+      const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+      const base = (seed + year + month + day) % 3000;
+
+      const mainChannel = (base + 729 + (year % 13)) % 3000;
+      const alt1 = (base + 229 + (day % 17)) % 3000;
+      const alt2 = (base + 909 + (month % 9)) % 3000;
+
+      const mainStr = mainChannel.toString().padStart(3, "0");
+      const alt1Str = alt1.toString().padStart(3, "0");
+      const alt2Str = alt2.toString().padStart(3, "0");
 
       let config = {};
       try {
@@ -89,29 +98,21 @@
 
       const todayKey = today.toISOString().split("T")[0];
       const daily = config[todayKey] || {};
-
-      const mainChannels = (daily.recommendedChannels || {}).default || ["1355", "2310", "2999"];
-      const altChannels = (daily.recommendedChannels || {}).fallback || ["0988", "0877"];
-      const dynamicTail = daily.tail || ["09", "29", "39", "00", "99"];
+      const tails = daily.tail || ["09", "29", "39", "00", "99"];
       const grindTime = daily.grindTime || "晚上 20:00 - 23:00";
-      const tangAdvice = daily.tang || "🌠 今日情緒起伏偏大，適合短線操作與分批嘗試";
-      const dailyHoroscope = (daily.horoscopes || {})[horoscope] || "🔹 今日無特別建議，建議依個人節奏操作";
+      const tang = daily.tang || "🌠 唐楊琦老師：今日起伏偏大，適合分批進場操作";
+      const signAdvice = (daily.horoscopes || {})[horoscope] || "🔹 無特別建議，可觀察頻道運勢決定衝捲時機";
 
       document.getElementById("result").innerHTML = `
         🔮 <b>生肖：</b>${zodiac}<br>
         🌌 <b>星座：</b>${horoscope}<br><br>
-        📡 <b>今日推薦頻道號碼：</b><br>
-        ✅ 主推：<b style="color:#007bff; font-size:1.4rem">${mainChannels.join("、")}</b><br>
-        ✨ 次選：${altChannels.join("、")}<br><br>
-        🔢 <b>推薦尾號：</b>${dynamicTail.map(n => `<code>${n}</code>`).join("、")}<br><br>
-        📜 <b>今日衝捲建議：</b><br>
-        ${dailyHoroscope}<br>
-        🔹 建議觀察頻道運氣後，再衝重要部位<br>
-        🔹 連敗後建議切換頻道轉運<br>
-        <br><hr><br>
-        🧙‍♂️ <b>唐楊琦老師建議：</b><br>
-        ${tangAdvice}<br>
-        ⏰ <b>最佳刷怪時段：</b> <span style="color:#008800">${grindTime}</span>
+        📡 <b>推薦頻道號碼：</b><br>
+        ✅ 主推：<b style="color:#007bff; font-size:1.4rem">${mainStr}</b><br>
+        ✨ 次選：${alt1Str}、${alt2Str}<br><br>
+        🔢 <b>推薦尾號：</b>${tails.map(n => `<code>${n}</code>`).join("、")}<br><br>
+        💡 <b>星座建議：</b>${signAdvice}<br>
+        🧙‍♂️ <b>唐楊琦建議：</b>${tang}<br>
+        ⏰ <b>刷怪時段：</b>${grindTime}
       `;
     }
   </script>
